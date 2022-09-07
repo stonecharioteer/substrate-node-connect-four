@@ -74,6 +74,8 @@ and running `cargo test`.
 The tests cover every testcase that the code accounts for, and they also serve a way to document
 how the flow of the game works.
 
+![Testing](./tests.png)
+
 ## Game Flow
 
 ```mermaid
