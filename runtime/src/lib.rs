@@ -43,11 +43,11 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-/// Import the template pallet.
-pub use pallet_template;
+/// import the connect_four pallet
+pub use pallet_connect_four;
 
 /// An index to a block.
-pub type BlockNumber = u32;
+pub type BlockNumber = u64;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -265,9 +265,19 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
+
+parameter_types! {
+	pub const PointsForWin: u32 = 5;
+	pub const PointsForLoss: u32 = 2;
+	pub const PointsForDraw: u32 = 3;
+
+}
+impl pallet_connect_four::Config for Runtime {
 	type Event = Event;
+	type RandomnessSource = RandomnessCollectiveFlip;
+	type PointsForWin = PointsForWin;
+	type PointsForLoss = PointsForLoss;
+	type PointsForDraw = PointsForDraw;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -286,8 +296,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplateModule: pallet_template,
+		ConnectFour: pallet_connect_four,
 	}
 );
 
@@ -332,7 +341,6 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_template, TemplateModule]
 	);
 }
 
