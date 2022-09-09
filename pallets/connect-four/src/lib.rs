@@ -1,5 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(unused)]
 
 //! Connect Four Game definition
 //! This pallet allows accounts to play a game of connect four with each other.
@@ -15,11 +14,10 @@ mod tests;
 pub use pallet::*;
 use sp_std::vec::Vec;
 pub type BlockNumber = u64;
-use codec::{Decode, Encode};
+use codec::Encode;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::debug;
 	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 	use frame_support::{sp_runtime::app_crypto::sp_core::H256, traits::Randomness};
 	use frame_system::pallet_prelude::*;
@@ -86,12 +84,6 @@ pub mod pallet {
 		pub lost: u64,
 		pub ongoing: u64,
 		pub points: i64,
-	}
-
-	impl ScoreCard {
-		fn new() -> Self {
-			ScoreCard { played: 0, won: 0, draw: 0, lost: 0, ongoing: 0, points: 0}
-		}
 	}
 
 	/// A connect four board struct that contains a state matrix.
@@ -463,11 +455,17 @@ pub mod pallet {
 		ChallengeDoesNotExist,
 		/// Game has ended
 		BoardExistsError,
+		/// The board has not been initiated
 		BoardNotReady,
+		/// That column is full, but the game is playable.
 		ColumnFull,
+		/// The game has ended, make a new challenge
 		GameEnded,
+		/// The board is unplayable since all columns are full
 		NoPlayableMove,
+		/// unaccounted error
 		UnknownError,
+		/// The challenge hasn't yet been accepted
 		ChallengeNotYetAccepted,
 	}
 
@@ -502,11 +500,10 @@ pub mod pallet {
 			ensure!(!challenge_exists, <Error<T>>::ChallengeExists);
 			// no challenge exists between these two.
 			// Create new board
-			let random_seed = T::RandomnessSource::random_seed();
 			// Using a subject is recommended to prevent accidental re-use of the seed
 			// (This does not add security or entropy)
 			let subject = Self::encode_and_update_nonce();
-			let (board_id, block_number) = T::RandomnessSource::random(&subject);
+			let (board_id, _) = T::RandomnessSource::random(&subject);
 
 			let board = ConnectFourBoardStruct::<T::AccountId>::new(
 				board_id,
@@ -545,13 +542,13 @@ pub mod pallet {
 			ensure!(!own_challenge, <Error<T>>::CannotAcceptYourOwnChallenge);
 			let challenge_already_accepted = board.challenge_accepted;
 			ensure!(!challenge_already_accepted, <Error<T>>::ActiveGameExists);
-			// TODO: check if the board is completed, if so, a new challenge needs to be issued.
-			// Ideally, I should invalidate the map for these address on game completion.
-			let game_ongoing = !board.active;
 			// let user know if there's already an active game.
 			// there's no existing challenge so this can be accepted.
 			board.challenge_accepted = true;
-			board.create_game_board();
+			match board.create_game_board() {
+				Ok(_) => (),
+				Err(_) => ensure!(false, <Error<T>>::ActiveGameExists),
+			};
 			let mut score_card_1 = Self::get_scorecard(&board.player_1);
 			let mut score_card_2 = Self::get_scorecard(&board.player_2);
 			score_card_1.played += 1;
@@ -633,9 +630,6 @@ pub mod pallet {
 									score_card_2.won = score_card_2.won + 1;
 									score_card_1.points -= T::PointsForLoss::get() as i64;
 									score_card_2.points += T::PointsForWin::get() as i64;
-									// update the scorecards.
-									let score_card_1 = <AccountScoreCard<T>>::get(board.player_1.clone());
-									let score_card_2 = <AccountScoreCard<T>>::get(board.player_2.clone());
 									Self::deposit_event(Event::GameWon(
 										board.player_2.clone(),
 										board_id,
@@ -647,8 +641,9 @@ pub mod pallet {
 							<AccountScoreCard<T>>::set(&board.player_2, score_card_2);
 							// emit that a game has ended.
 							Self::deposit_event(Event::GameEnded(board_id));
+							return Ok(());
 						},
-						WinState::Draw => {},
+						WinState::Draw => (),
 						WinState::Ongoing => (),
 					}
 
@@ -666,7 +661,6 @@ pub mod pallet {
 						// remove board from users' storagedoublemap
 						<Challenges<T>>::remove(&player, &other_player);
 						<Challenges<T>>::remove(&other_player, &player);
-						Self::deposit_event(Event::MoveMade(player, other_player));
 						Self::deposit_event(Event::GameEnded(board_id));
 						Self::deposit_event(Event::GameDrawn(board_id));
 					} else {

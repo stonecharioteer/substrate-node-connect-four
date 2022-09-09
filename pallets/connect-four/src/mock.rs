@@ -1,5 +1,5 @@
 //! Mock library for tests.
-use crate::{self as pallet_connect_four, Config, Event as PalletEvent};
+use crate::{self as pallet_connect_four};
 use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
 use sp_core::H256;

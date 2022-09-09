@@ -1,6 +1,6 @@
 //! tests for connect-four
 use crate::{mock::*, Error};
-use crate::{Challenges, Coin, ConnectFourBoardStruct, WinState, Player, AccountScoreCard, ConnectFourBoardById};
+use crate::{Challenges, Coin, WinState, Player, AccountScoreCard};
 use frame_support::{assert_noop, assert_ok};
 
 /// An account can challege another account.
@@ -172,7 +172,7 @@ fn can_win_simple_game() {
 		assert_ok!(ConnectFour::play(Origin::signed(1), 2, 0));
 		assert_ok!(ConnectFour::play(Origin::signed(2), 1, 1));
 		assert_ok!(ConnectFour::play(Origin::signed(1), 2, 0));
-		let mut board = ConnectFour::get_connect_four_board_by_id(board_id).unwrap();
+		let  board = ConnectFour::get_connect_four_board_by_id(board_id).unwrap();
 		assert_eq!(board.active, false, "The game should no longer be active");
 		assert_eq!(board.win_state, WinState::Player(Player::One), "Player 1 should be the winner.");
 		assert_eq!(board.state, None, "The game state should be purged and not kept on chain.");
@@ -221,7 +221,7 @@ fn can_draw_a_game() {
 		// get board_id before starting
 		let board_id = ConnectFour::get_challenge(1, 2);
 		let mut board = ConnectFour::get_connect_four_board_by_id(board_id).unwrap();
-		/// set the board state to a definite draw.
+		// set the board state to a definite draw.
 		let draw_state = vec![
 			vec![Coin::Player1, Coin::Player2, Coin::Player1, Coin::Player2, Coin::Player1, Coin::Player2, Coin::Player1],
 			vec![Coin::Player2, Coin::Player1, Coin::Player1, Coin::Player2, Coin::Player2, Coin::Player2, Coin::Player1],
