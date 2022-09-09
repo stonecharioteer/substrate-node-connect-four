@@ -1,3 +1,10 @@
+# Substrate Node Connect Four
+
+This repo is an implementation of the connect-four game on the Substrate framework. What follows below is the original
+README of the `substrate node template` repo.
+
+[For the README for this project, go here.](/pallets/connect-four/README.md)
+
 # Substrate Node Template
 
 [![Try on playground](https://img.shields.io/badge/Playground-Node_Template-brightgreen?logo=Parity%20Substrate)](https://docs.substrate.io/playground/) [![Matrix](https://img.shields.io/matrix/substrate-technical:matrix.org)](https://matrix.to/#/#substrate-technical:matrix.org)
